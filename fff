@@ -222,6 +222,7 @@ print_line() {
     local file_ext=${file_name##*.}
     local format
     local suffix
+    icon=
 
     # If the dir item doesn't exist, end here.
     if [[ -z ${list[$1]} ]]; then
@@ -230,35 +231,44 @@ print_line() {
     # Directory.
     elif [[ -d ${list[$1]} ]]; then
         format+=\\e[${di:-1;3${FFF_COL1:-2}}m
-        suffix+=/
+        #suffix+=/
+	icon=$(echo -e "\uf07b ")
 
     # Block special file.
     elif [[ -b ${list[$1]} ]]; then
         format+=\\e[${bd:-40;33;01}m
+	icon=$(echo -e "\uf8a0 ")
 
     # Character special file.
     elif [[ -c ${list[$1]} ]]; then
         format+=\\e[${cd:-40;33;01}m
+	icon=$(echo -e "\uf8a3 ")
 
     # Executable file.
     elif [[ -x ${list[$1]} ]]; then
         format+=\\e[${ex:-01;32}m
+	icon=$(echo -e "\uf016 ")
 
     # Symbolic Link (broken).
     elif [[ -h ${list[$1]} && ! -e ${list[$1]} ]]; then
         format+=\\e[${mi:-01;31;7}m
+	icon=$(echo -e "\uf8a6 ")
 
     # Symbolic Link.
     elif [[ -h ${list[$1]} ]]; then
         format+=\\e[${ln:-01;36}m
+	icon=$(echo -e "\uf8a9 ")
 
     # Fifo file.
     elif [[ -p ${list[$1]} ]]; then
         format+=\\e[${pi:-40;33}m
+	icon=$(echo -e "\uf8ac ")
 
     # Socket file.
     elif [[ -S ${list[$1]} ]]; then
         format+=\\e[${so:-01;35}m
+	icon=$(echo -e "\uf8af ")
+
 
     # Color files that end in a pattern as defined in LS_COLORS.
     # 'BASH_REMATCH' is an array that stores each REGEX match.
@@ -268,18 +278,31 @@ print_line() {
         match=${BASH_REMATCH[0]}
         file_ext=ls_${match//[^a-zA-Z0-9=\\;]/_}
         format+=\\e[${!file_ext:-${fi:-37}}m
+	icon=$(echo -e "\uf8b2 ")
+	icon=$file_ext
 
     # Color files based on file extension and LS_COLORS.
     # Check if file extension adheres to POSIX naming
-    # stardard before checking if it's a variable.
+    # stardard before checking if it\'s a variable.
     elif [[ $FFF_LS_COLORS == 1 &&
             $file_ext != "$file_name" &&
             $file_ext =~ ^[a-zA-Z0-9_]*$ ]]; then
         file_ext=ls_${file_ext}
         format+=\\e[${!file_ext:-${fi:-37}}m
+	if [[ $file_ext == 'ls_md' ]]; then
+	    icon=$(echo -e "\uf48a ")
+	else
+	    icon=$(echo -e "\uf8b5 ")
+	    #icon=$file_ext
+	fi
 
     else
         format+=\\e[${fi:-37}m
+	icon=$(echo -e "\uf016 ")
+    fi
+
+    if [[ $file_ext == ".md" ]]; then
+        icon=" "
     fi
 
     # If the list item is under the cursor.
@@ -298,7 +321,7 @@ print_line() {
 
     printf '\r%b%s\e[m\r' \
         "${file_pre}${format}" \
-        "${file_name}${suffix}${file_post}"
+        "${icon}${file_name}${suffix}${file_post}"
 }
 
 draw_dir() {
